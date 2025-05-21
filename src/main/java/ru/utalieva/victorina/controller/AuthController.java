@@ -52,6 +52,7 @@ public class AuthController {
                 request.getUsername(),
                 request.getPassword(),
                 request.getEmail()
+
         );
     }
 }
