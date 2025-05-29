@@ -1,4 +1,4 @@
-// JwtTokenUtil.java
+
 package ru.utalieva.victorina.security;
 
 import io.jsonwebtoken.Claims;

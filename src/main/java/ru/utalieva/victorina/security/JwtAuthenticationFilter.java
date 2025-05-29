@@ -1,4 +1,4 @@
-// JwtAuthenticationFilter.java
+
 package ru.utalieva.victorina.security;
 
 import jakarta.servlet.FilterChain;

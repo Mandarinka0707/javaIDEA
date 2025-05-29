@@ -37,7 +37,7 @@ public class User implements UserDetails {
         return Collections.singletonList((GrantedAuthority) () -> "ROLE_" + role);
     }
 
-    // Остальные методы остаются без изменений
+
     @Override
     public String getPassword() {
         return password;
