@@ -1,0 +1,1 @@
+ALTER TABLE quiz_attempts ALTER COLUMN end_time DROP NOT NULL; 
