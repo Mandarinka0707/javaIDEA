@@ -44,4 +44,9 @@ public class QuizAttempt {
     @Column(name = "user_answers")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Integer> userAnswers;
-} 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "personality_result_id")
+    private QuizResult personalityResult;
+}
+

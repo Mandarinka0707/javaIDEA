@@ -1,16 +1,15 @@
 package ru.utalieva.victorina.model.enumination;
 
+import lombok.Getter;
+
+@Getter
 public enum QuizType {
-    STANDARD("Стандартная викторина"),
-    PERSONALITY("Тест на определение персонажа");
+    STANDARD("Стандартная"),
+    PERSONALITY("Личностный тест");
 
     private final String displayName;
 
     QuizType(String displayName) {
         this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 } 

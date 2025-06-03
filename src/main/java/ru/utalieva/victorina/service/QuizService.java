@@ -1,6 +1,5 @@
 package ru.utalieva.victorina.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,15 +8,16 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.utalieva.victorina.model.dto.QuizCreateDTO;
 import ru.utalieva.victorina.model.dto.QuizDTO;
 import ru.utalieva.victorina.model.dto.QuestionDTO;
-import ru.utalieva.victorina.model.dto.OptionDTO;
-import ru.utalieva.victorina.model.entity.*;
+import ru.utalieva.victorina.model.entity.Quiz;
+import ru.utalieva.victorina.model.entity.Question;
+import ru.utalieva.victorina.model.entity.Option;
+import ru.utalieva.victorina.model.entity.QuizResult;
+import ru.utalieva.victorina.model.entity.User;
 import ru.utalieva.victorina.model.enumination.QuizType;
 import ru.utalieva.victorina.repository.QuizRepository;
 import ru.utalieva.victorina.repository.QuizResultRepository;
 import ru.utalieva.victorina.repository.UserRepository;
-import ru.utalieva.victorina.security.SecurityUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,8 +30,6 @@ public class QuizService {
     private final QuizRepository quizRepository;
     private final QuizResultRepository quizResultRepository;
     private final UserRepository userRepository;
-    private final SecurityUtils securityUtils;
-    private final ObjectMapper objectMapper;
 
     @Transactional
     public Quiz createQuiz(QuizCreateDTO quizDTO, String username) {
@@ -151,11 +149,6 @@ public class QuizService {
         return quizRepository.findByAuthorUsername(username).stream()
                 .map(QuizDTO::fromEntity)
                 .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isQuizOwner(Quiz quiz, User user) {
-        return quiz.getAuthor().getId().equals(user.getId());
     }
 
     @Transactional(readOnly = true)

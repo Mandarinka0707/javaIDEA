@@ -1,8 +1,8 @@
 package ru.utalieva.victorina.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.utalieva.victorina.model.dto.QuizAttemptRequest;
@@ -25,10 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.HashSet;
-import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +32,6 @@ public class QuizAttemptService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final QuizRepository quizRepository;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
     private static final Logger logger = LoggerFactory.getLogger(QuizAttemptService.class);
 
     @Transactional
@@ -94,7 +89,7 @@ public class QuizAttemptService {
             } else {
                 logger.warn("Could not determine personality result for quiz attempt: {}", attempt.getId());
                 // Используем первый результат как запасной вариант
-                attempt.setPersonalityResult(quiz.getResults().isEmpty() ? null : quiz.getResults().get(0));
+                attempt.setPersonalityResult(quiz.getResults().isEmpty() ? null : quiz.getResults().getFirst());
             }
         } else {
             // Для стандартной викторины считаем очки
@@ -182,7 +177,7 @@ public class QuizAttemptService {
         }
         
         // If no result can be determined, return the first result as default
-        return quiz.getResults().isEmpty() ? null : quiz.getResults().get(0);
+        return quiz.getResults().isEmpty() ? null : quiz.getResults().getFirst();
     }
 
     private QuizAttemptResponse createAttemptResponse(QuizAttempt attempt) {
@@ -204,7 +199,7 @@ public class QuizAttemptService {
                     logger.warn("No personality result found for completed personality quiz attempt: {}", attempt.getId());
                     // Используем первый результат как запасной вариант
                     if (!attempt.getQuiz().getResults().isEmpty()) {
-                        response.setPersonalityResult(QuizResultDTO.fromEntity(attempt.getQuiz().getResults().get(0)));
+                        response.setPersonalityResult(QuizResultDTO.fromEntity(attempt.getQuiz().getResults().getFirst()));
                         response.setScore(attempt.getTotalQuestions());
                     }
                 }

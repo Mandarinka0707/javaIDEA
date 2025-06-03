@@ -1,8 +1,6 @@
 package ru.utalieva.victorina.model.dto;
 
 import lombok.Data;
-import ru.utalieva.victorina.model.entity.Question;
-import ru.utalieva.victorina.model.entity.QuizResult;
 import ru.utalieva.victorina.model.entity.Quiz;
 import ru.utalieva.victorina.model.enumination.QuizType;
 
