@@ -1,10 +1,17 @@
 package ru.utalieva.victorina.model.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import java.util.List;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class QuizAttemptResponse {
     private Long attemptId;
     private Long quizId;
@@ -12,9 +19,7 @@ public class QuizAttemptResponse {
     private Integer score;
     private Integer totalQuestions;
     private Integer timeSpent;
-    private Map<Integer, Boolean> answers; // questionIndex -> isCorrect
-    private List<String> correctAnswers; // Только для завершенной викторины
     private Boolean isCompleted;
-    private Integer position; // Позиция в рейтинге
-    private QuizResultDTO personalityResult; // Результат для personality quiz
+    private Map<Integer, Integer> answers;
+    private LocalDateTime endTime;
 } 

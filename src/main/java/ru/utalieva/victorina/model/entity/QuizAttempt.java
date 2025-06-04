@@ -2,50 +2,48 @@ package ru.utalieva.victorina.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
 @Entity
 @Table(name = "quiz_attempts")
+@Data
+@NoArgsConstructor
 public class QuizAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id", nullable = false)
-    private Quiz quiz;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
-    private Integer score;
-
-    @Column(nullable = false)
-    private Integer totalQuestions;
-
-    @Column(nullable = false)
-    private Integer timeSpent; // в секундах
+    @ManyToOne
+    @JoinColumn(name = "quiz_id", nullable = false)
+    private Quiz quiz;
 
     @Column(nullable = false)
     private LocalDateTime startTime;
 
-    @Column
     private LocalDateTime endTime;
 
+    private Integer score;
+
+    private Integer totalQuestions;
+
+    private Integer timeSpent;
+
     @Column(nullable = false)
-    private Boolean isCompleted = false;
+    private Boolean isCompleted;
 
-    @Column(name = "user_answers")
+    @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
-    private Map<String, Integer> userAnswers;
+    private Map<Integer, Integer> userAnswers;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "personality_result_id")
     private QuizResult personalityResult;
 }

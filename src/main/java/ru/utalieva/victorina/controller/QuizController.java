@@ -6,7 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import ru.utalieva.victorina.model.dto.*;
+import ru.utalieva.victorina.model.dto.auth.ErrorResponse;
+import ru.utalieva.victorina.model.dto.personality.PersonalityQuizCreateDTO;
+import ru.utalieva.victorina.model.dto.quiz.OptionDTO;
+import ru.utalieva.victorina.model.dto.quiz.QuestionDTO;
+import ru.utalieva.victorina.model.dto.quiz.QuizCreateDTO;
+import ru.utalieva.victorina.model.dto.quiz.QuizDTO;
 import ru.utalieva.victorina.model.entity.Quiz;
 import ru.utalieva.victorina.model.entity.User;
 import ru.utalieva.victorina.model.enumination.QuizType;
@@ -18,7 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/quizzes")

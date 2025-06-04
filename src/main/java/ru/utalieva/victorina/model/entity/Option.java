@@ -22,6 +22,9 @@ public class Option {
     @Column(nullable = false, length = 1000)
     private String content;
 
+    @Column(length = 1000)
+    private String image;
+
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Integer> traits;
@@ -29,4 +32,8 @@ public class Option {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
     private Question question;
+
+    @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Integer> personalityTraits;
 } 

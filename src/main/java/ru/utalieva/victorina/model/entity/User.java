@@ -31,6 +31,9 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "rating")
+    private Double rating = 0.0;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

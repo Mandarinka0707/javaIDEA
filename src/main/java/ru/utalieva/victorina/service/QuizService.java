@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.utalieva.victorina.model.dto.QuizCreateDTO;
-import ru.utalieva.victorina.model.dto.QuizDTO;
-import ru.utalieva.victorina.model.dto.QuestionDTO;
+import ru.utalieva.victorina.model.dto.quiz.QuizCreateDTO;
+import ru.utalieva.victorina.model.dto.quiz.QuizDTO;
+import ru.utalieva.victorina.model.dto.quiz.QuestionDTO;
 import ru.utalieva.victorina.model.entity.Quiz;
 import ru.utalieva.victorina.model.entity.Question;
 import ru.utalieva.victorina.model.entity.Option;
@@ -18,6 +18,7 @@ import ru.utalieva.victorina.repository.QuizRepository;
 import ru.utalieva.victorina.repository.QuizResultRepository;
 import ru.utalieva.victorina.repository.UserRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,39 +34,67 @@ public class QuizService {
 
     @Transactional
     public Quiz createQuiz(QuizCreateDTO quizDTO, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        try {
+            logger.debug("Starting quiz creation for user: {}", username);
+            
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        Quiz quiz = new Quiz();
-        quiz.setTitle(quizDTO.getTitle());
-        quiz.setDescription(quizDTO.getDescription());
-        quiz.setCategory(quizDTO.getCategory());
-        quiz.setDifficulty(quizDTO.getDifficulty());
-        quiz.setQuizType(quizDTO.getQuizType() != null ? quizDTO.getQuizType() : QuizType.STANDARD);
-        quiz.setTimeDuration(quizDTO.getTimeDuration());
-        quiz.setPublic(quizDTO.isPublic());
-        quiz.setAuthor(user);
-        
-        // Конвертируем QuestionDTO в Question
-        List<Question> questions = quizDTO.getQuestions().stream()
-                .map(questionDTO -> convertToQuestion(questionDTO, quiz))
-                .collect(Collectors.toList());
-        quiz.setQuestions(questions);
+            Quiz quiz = new Quiz();
+            quiz.setTitle(quizDTO.getTitle());
+            quiz.setDescription(quizDTO.getDescription());
+            quiz.setCategory(quizDTO.getCategory());
+            quiz.setDifficulty(quizDTO.getDifficulty());
+            quiz.setQuizType(quizDTO.getQuizType() != null ? quizDTO.getQuizType() : QuizType.STANDARD);
+            quiz.setTimeDuration(quizDTO.getTimeDuration());
+            quiz.setPublic(quizDTO.isPublic());
+            quiz.setAuthor(user);
+            
+            // Сохраняем теги
+            if (quizDTO.getTags() != null && !quizDTO.getTags().isEmpty()) {
+                quiz.setTags(new ArrayList<>(quizDTO.getTags()));
+                logger.debug("Added {} tags to quiz", quizDTO.getTags().size());
+            }
+            
+            // Validate questions
+            if (quizDTO.getQuestions() == null || quizDTO.getQuestions().isEmpty()) {
+                throw new IllegalArgumentException("Викторина должна содержать хотя бы один вопрос");
+            }
 
-        Quiz savedQuiz = quizRepository.save(quiz);
+            // Конвертируем QuestionDTO в Question
+            List<Question> questions = quizDTO.getQuestions().stream()
+                    .map(questionDTO -> convertToQuestion(questionDTO, quiz))
+                    .collect(Collectors.toList());
+            quiz.setQuestions(questions);
 
-        // Создаем результаты в зависимости от типа викторины
-        if (QuizType.PERSONALITY.equals(quiz.getQuizType())) {
-            createPersonalityResults(savedQuiz, quizDTO.getResults());
-        } else {
-            createStandardResults(savedQuiz, quizDTO.getQuestions().size());
+            Quiz savedQuiz = quizRepository.save(quiz);
+            logger.debug("Quiz saved successfully with ID: {}", savedQuiz.getId());
+
+            // Создаем результаты в зависимости от типа викторины
+            if (QuizType.PERSONALITY.equals(quiz.getQuizType())) {
+                if (quizDTO.getResults() == null || quizDTO.getResults().isEmpty()) {
+                    throw new IllegalArgumentException("Для теста личности необходимо добавить варианты результатов");
+                }
+                createPersonalityResults(savedQuiz, quizDTO.getResults());
+            } else {
+                createStandardResults(savedQuiz, quizDTO.getQuestions().size());
+            }
+
+            logger.debug("Quiz creation completed successfully");
+            return savedQuiz;
+            
+        } catch (Exception e) {
+            logger.error("Error creating quiz: {}", e.getMessage(), e);
+            throw new RuntimeException("Ошибка при создании викторины: " + e.getMessage());
         }
-
-        return savedQuiz;
     }
 
     private Question convertToQuestion(QuestionDTO questionDTO, Quiz quiz) {
         try {
+            if (questionDTO.getOptions() == null || questionDTO.getOptions().isEmpty()) {
+                throw new IllegalArgumentException("Вопрос должен содержать варианты ответов");
+            }
+
             Question question = new Question();
             question.setQuiz(quiz);
             question.setQuestion(questionDTO.getQuestion());
@@ -77,17 +106,28 @@ public class QuizService {
                         option.setQuestion(question);
                         option.setContent(optionDTO.getContent());
                         option.setType(optionDTO.getType());
+                        option.setImage(optionDTO.getImage());
                         option.setTraits(optionDTO.getTraits());
                         return option;
                     })
                     .collect(Collectors.toList());
             question.setOptions(options);
+            
+            // Validate correctIndex
+            if (quiz.getQuizType() == QuizType.STANDARD) {
+                if (questionDTO.getCorrectIndex() == null) {
+                    throw new IllegalArgumentException("Для стандартной викторины необходимо указать правильный ответ");
+                }
+                if (questionDTO.getCorrectIndex() < 0 || questionDTO.getCorrectIndex() >= options.size()) {
+                    throw new IllegalArgumentException("Индекс правильного ответа некорректен");
+                }
+            }
             question.setCorrectIndex(questionDTO.getCorrectIndex());
             
             return question;
         } catch (Exception e) {
-            logger.error("Error converting question: {}", e.getMessage(), e);
-            throw new RuntimeException("Ошибка при создании вопроса: " + e.getMessage());
+            logger.error("Error converting question DTO to entity", e);
+            throw e;
         }
     }
 

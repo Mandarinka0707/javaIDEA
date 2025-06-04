@@ -1,0 +1,1 @@
+ALTER TABLE quiz_results ADD COLUMN personality_traits jsonb; 
