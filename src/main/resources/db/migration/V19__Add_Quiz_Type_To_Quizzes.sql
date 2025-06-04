@@ -1,0 +1,2 @@
+ALTER TABLE quizzes ADD COLUMN quiz_type VARCHAR(50);
+
