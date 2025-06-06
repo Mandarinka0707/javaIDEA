@@ -209,9 +209,9 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
     }
 
     private QuizResult calculatePersonalityResult(Quiz quiz, Map<Integer, Integer> answers) {
-        Map<String, Integer> traitScores = new HashMap<>();
+        Map<Integer, Integer> resultCounts = new HashMap<>();
         
-        // Подсчитываем очки для каждой характеристики на основе ответов
+        // Подсчитываем, сколько ответов указывает на каждого персонажа
         for (Map.Entry<Integer, Integer> entry : answers.entrySet()) {
             int questionIndex = entry.getKey();
             int selectedAnswer = entry.getValue();
@@ -220,56 +220,37 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
                 Question question = quiz.getQuestions().get(questionIndex);
                 Option selectedOption = question.getOptions().get(selectedAnswer);
                 
-                // Добавляем очки характеристик из выбранного варианта
+                // Получаем индекс персонажа из характеристик варианта ответа
                 Map<String, Integer> optionTraits = selectedOption.getPersonalityTraits();
-                if (optionTraits != null) {
-                    optionTraits.forEach((trait, score) -> 
-                        traitScores.merge(trait, score, Integer::sum));
+                if (optionTraits != null && optionTraits.get("resultIndex") != null) {
+                    int resultIndex = optionTraits.get("resultIndex");
+                    resultCounts.merge(resultIndex, 1, Integer::sum);
                 }
             }
         }
         
-        // Находим результат, который лучше всего соответствует набранным характеристикам
-        return findBestMatchingResult(quiz.getResults(), traitScores);
-    }
-
-    private QuizResult findBestMatchingResult(List<QuizResult> results, Map<String, Integer> userTraits) {
-        if (results == null || results.isEmpty()) {
-            throw new IllegalStateException("Не настроены результаты для personality викторины");
-        }
+        // Находим персонажа с наибольшим количеством ответов
+        int maxCount = -1;
+        int bestResultIndex = 0;
         
-        QuizResult bestMatch = null;
-        int bestMatchScore = Integer.MIN_VALUE;
-        
-        for (QuizResult result : results) {
-            int matchScore = calculateMatchScore(result.getPersonalityTraits(), userTraits);
-            if (matchScore > bestMatchScore) {
-                bestMatchScore = matchScore;
-                bestMatch = result;
+        for (Map.Entry<Integer, Integer> entry : resultCounts.entrySet()) {
+            if (entry.getValue() > maxCount) {
+                maxCount = entry.getValue();
+                bestResultIndex = entry.getKey();
             }
         }
         
-        if (bestMatch == null) {
-            throw new IllegalStateException("Не удалось определить результат personality викторины");
+        // Возвращаем результат по индексу
+        List<QuizResult> results = quiz.getResults();
+        if (results != null && !results.isEmpty() && bestResultIndex < results.size()) {
+            return results.get(bestResultIndex);
         }
         
-        return bestMatch;
-    }
-
-    private int calculateMatchScore(Map<String, Integer> resultTraits, Map<String, Integer> userTraits) {
-        if (resultTraits == null || userTraits == null) {
-            return 0;
+        // Если что-то пошло не так, возвращаем первый результат
+        if (results != null && !results.isEmpty()) {
+            return results.get(0);
         }
         
-        int score = 0;
-        for (Map.Entry<String, Integer> trait : resultTraits.entrySet()) {
-            Integer userScore = userTraits.get(trait.getKey());
-            if (userScore != null) {
-                // Чем меньше разница между ожидаемым и фактическим значением характеристики,
-                // тем выше очки соответствия
-                score += Math.max(0, 10 - Math.abs(trait.getValue() - userScore));
-            }
-        }
-        return score;
+        throw new IllegalStateException("Не удалось определить результат personality викторины");
     }
 } 

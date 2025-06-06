@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/quizzes/personality").authenticated()
                         .requestMatchers("/api/friends/**").authenticated()
                         .requestMatchers("/api/messages/**").authenticated()
+                        .requestMatchers("/api/users/profile").authenticated()
+                        .requestMatchers("/api/feed/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

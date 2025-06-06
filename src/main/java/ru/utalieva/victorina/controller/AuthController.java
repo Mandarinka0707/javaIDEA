@@ -58,14 +58,17 @@ public class AuthController {
     }
 
     @GetMapping("/validate")
-    public ResponseEntity<Void> validateToken(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        logger.debug("Validating token for user: {}", userPrincipal != null ? userPrincipal.getUsername() : "null");
-        if (userPrincipal != null) {
+    public ResponseEntity<?> validateToken(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        try {
+            logger.debug("Validating token for user: {}", userPrincipal.getUsername());
+            // Если мы дошли до этой точки, значит токен валиден
+            // (благодаря @AuthenticationPrincipal и настройкам безопасности)
             logger.debug("Token validation successful for user: {}", userPrincipal.getUsername());
             return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("Token validation failed", e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        logger.warn("Token validation failed: user principal is null");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @PostMapping("/refresh")

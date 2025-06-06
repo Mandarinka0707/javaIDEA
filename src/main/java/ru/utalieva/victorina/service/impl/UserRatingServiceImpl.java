@@ -34,7 +34,7 @@ public class UserRatingServiceImpl implements UserRatingService {
         try {
             logger.debug("Starting to update rating for user {}", userId);
             
-            List<QuizAttempt> attempts = quizAttemptRepository.findAllCompletedAttempts(userId);
+            List<QuizAttempt> attempts = quizAttemptRepository.findAllCompletedAttemptsExcludingPersonality(userId);
             
             UserRating rating = userRatingRepository.findByUserId(userId)
                 .orElseGet(() -> {

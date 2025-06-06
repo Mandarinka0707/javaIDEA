@@ -1,77 +1,82 @@
 package ru.utalieva.victorina.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import ru.utalieva.victorina.model.dto.FeedItemDTO;
-import ru.utalieva.victorina.model.entity.FeedItem;
+import ru.utalieva.victorina.model.dto.feed.FeedItemDTO;
 import ru.utalieva.victorina.service.FeedService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/profile/feed")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+@RequestMapping("/api/feed")
 public class FeedController {
     private final FeedService feedService;
-    private static final Logger logger = LoggerFactory.getLogger(FeedController.class);
+
+    @GetMapping("/friends")
+    public ResponseEntity<List<FeedItemDTO>> getFriendsFeed(@AuthenticationPrincipal UserDetails userDetails) {
+        log.info("Getting friends feed for user: {}", userDetails.getUsername());
+        return ResponseEntity.ok(feedService.getFriendsFeed(userDetails.getUsername()));
+    }
 
     @GetMapping
-    public ResponseEntity<List<FeedItemDTO>> getUserFeed() {
-        try {
-            List<FeedItemDTO> feed = feedService.getUserFeed();
-            return ResponseEntity.ok(feed);
-        } catch (Exception e) {
-            logger.error("Error fetching user feed", e);
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<List<FeedItemDTO>> getFeed() {
+        return ResponseEntity.ok(feedService.getFeedItems());
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<FeedItemDTO>> getUserFeed(@PathVariable Long userId) {
+        return ResponseEntity.ok(feedService.getUserFeedItems(userId));
     }
 
     @PostMapping("/publish")
-    public ResponseEntity<?> publishQuizResult(@RequestBody FeedItemDTO feedItemDTO) {
+    public ResponseEntity<?> publishQuizResult(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody FeedItemDTO feedItemDTO) {
         try {
-            logger.info("Received request to publish quiz result: {}", feedItemDTO);
+            log.info("Publishing quiz result for user: {}", userDetails.getUsername());
+            log.info("Feed item data: {}", feedItemDTO);
             
-            // Validate required fields
-            if (feedItemDTO.getQuizId() == null) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Quiz ID is required"));
+            if (feedItemDTO.getQuizType().equals("PERSONALITY")) {
+                log.info("Personality result data: {}", feedItemDTO.getPersonalityResult());
             }
             
-            if (feedItemDTO.getQuizTitle() == null || feedItemDTO.getQuizTitle().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Quiz title is required"));
-            }
-            
-            if (feedItemDTO.getQuizType() == null || feedItemDTO.getQuizType().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Quiz type is required"));
-            }
-
-            feedService.publishQuizResult(feedItemDTO);
-            return ResponseEntity.ok()
-                .body(Map.of("message", "Quiz result published successfully"));
-
+            FeedItemDTO published = feedService.publishQuizResult(feedItemDTO);
+            return ResponseEntity.ok(published);
         } catch (IllegalArgumentException e) {
-            logger.warn("Invalid request data: {}", e.getMessage());
+            log.error("Invalid feed item data: {}", e.getMessage());
             return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage()));
-                
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
-            logger.warn("Business rule violation: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", e.getMessage()));
-                
+            log.error("Feed item already exists: {}", e.getMessage());
+            return ResponseEntity.status(409)
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            logger.error("Error publishing quiz result", e);
+            log.error("Error publishing quiz result", e);
             return ResponseEntity.internalServerError()
-                .body(Map.of("error", "Failed to publish quiz result: " + e.getMessage()));
+                    .body(Map.of("error", "Не удалось опубликовать результат"));
+        }
+    }
+
+    @DeleteMapping("/{itemId}")
+    public ResponseEntity<?> deleteFeedItem(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long itemId) {
+        try {
+            feedService.deleteFeedItem(itemId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("error", "У вас нет прав для удаления этой публикации"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound()
+                    .build();
         }
     }
 } 

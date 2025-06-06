@@ -14,6 +14,7 @@ import ru.utalieva.victorina.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,17 +32,32 @@ public class QuizRatingService {
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         // Проверяем, оценивал ли пользователь эту викторину ранее
-        QuizRating quizRating = quizRatingRepository.findByQuizIdAndUserId(quizId, userId)
-                .orElse(new QuizRating());
+        Optional<QuizRating> existingRating = quizRatingRepository.findByQuizIdAndUserId(quizId, userId);
+        if (existingRating.isPresent()) {
+            throw new IllegalStateException("Вы уже оценили эту викторину");
+        }
 
+        // Создаем новую оценку
+        QuizRating quizRating = new QuizRating();
         quizRating.setQuiz(quiz);
         quizRating.setUser(user);
         quizRating.setRating(rating);
 
         quizRating = quizRatingRepository.save(quizRating);
 
-        // Обновляем средний рейтинг и количество оценок в викторине
-        updateQuizRating(quiz);
+        // Получаем актуальные данные для расчета среднего
+        Double averageRating = quizRatingRepository.getAverageRatingByQuizId(quizId);
+        Integer ratingCount = quizRatingRepository.getRatingCountByQuizId(quizId);
+
+        // Обновляем среднюю оценку и количество оценок в викторине
+        quiz.setAverageRating(averageRating != null ? 
+            BigDecimal.valueOf(averageRating).setScale(2, RoundingMode.HALF_UP) : 
+            BigDecimal.ZERO);
+        quiz.setRatingCount(ratingCount != null ? ratingCount : 0);
+
+        quizRepository.save(quiz);
+        logger.info("Updated quiz rating - Quiz: {}, Average: {}, Count: {}", 
+            quiz.getId(), quiz.getAverageRating(), quiz.getRatingCount());
 
         return quizRating;
     }

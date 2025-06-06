@@ -22,6 +22,9 @@ public class Quiz {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
+    private String type;  // STANDARD или PERSONALITY
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

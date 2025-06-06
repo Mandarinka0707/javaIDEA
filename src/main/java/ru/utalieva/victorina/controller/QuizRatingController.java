@@ -34,13 +34,21 @@ public class QuizRatingController {
                 .body(Map.of("error", "Оценка должна быть от 1 до 5"));
         }
 
-        QuizRating quizRating = quizRatingService.rateQuiz(quizId, userPrincipal.getId(), rating);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("averageRating", quizRating.getQuiz().getAverageRating());
-        response.put("totalRatings", quizRating.getQuiz().getRatingCount());
-        
-        return ResponseEntity.ok(response);
+        try {
+            QuizRating quizRating = quizRatingService.rateQuiz(quizId, userPrincipal.getId(), rating);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("averageRating", quizRating.getQuiz().getAverageRating());
+            response.put("totalRatings", quizRating.getQuiz().getRatingCount());
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409)
+                .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                .body(Map.of("message", "Произошла ошибка при сохранении оценки"));
+        }
     }
 
     @GetMapping("/{quizId}/user-rating")

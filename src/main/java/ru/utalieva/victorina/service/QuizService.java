@@ -45,7 +45,9 @@ public class QuizService {
             quiz.setDescription(quizDTO.getDescription());
             quiz.setCategory(quizDTO.getCategory());
             quiz.setDifficulty(quizDTO.getDifficulty());
-            quiz.setQuizType(quizDTO.getQuizType() != null ? quizDTO.getQuizType() : QuizType.STANDARD);
+            QuizType quizType = quizDTO.getQuizType() != null ? quizDTO.getQuizType() : QuizType.STANDARD;
+            quiz.setQuizType(quizType);
+            quiz.setType(quizType.name());
             quiz.setTimeDuration(quizDTO.getTimeDuration());
             quiz.setPublic(quizDTO.isPublic());
             quiz.setAuthor(user);

@@ -3,50 +3,65 @@ package ru.utalieva.victorina.model.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.Map;
+import ru.utalieva.victorina.model.enumination.PostType;
 
+import java.time.LocalDateTime;
+
+@Data
 @Entity
 @Table(name = "feed_items")
-@Data
 @NoArgsConstructor
 public class FeedItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "quiz_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
-    @Column(nullable = false)
+    @Column(name = "quiz_title")
     private String quizTitle;
 
-    @Column(nullable = false)
+    @Column(name = "quiz_type")
     private String quizType;
 
-    @Column(nullable = false)
-    private LocalDateTime completedAt;
-
-    // Для обычных викторин
     private Integer score;
+
+    @Column(name = "total_questions")
     private Integer totalQuestions;
+
+    @Column(name = "time_spent")
     private Integer timeSpent;
+
     private Integer position;
 
-    // Для личностных викторин
-    private String character;
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private String image;
 
-    @ElementCollection
-    @CollectionTable(name = "feed_item_traits",
-            joinColumns = @JoinColumn(name = "feed_item_id"))
-    @MapKeyColumn(name = "trait_name")
-    @Column(name = "trait_value")
-    private Map<String, Integer> traits;
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "personality_result_id")
+    private QuizResult personalityResult;
+
+    @PrePersist
+    protected void onCreate() {
+        if (completedAt == null) {
+            completedAt = LocalDateTime.now();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 } 
